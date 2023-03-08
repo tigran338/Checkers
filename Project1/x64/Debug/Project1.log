@@ -1,0 +1,5 @@
+﻿  main.cpp
+D:\Homework\Tigran\Comp 565 Vahe Karamian\Project1\main.cpp(190,49): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Homework\Tigran\Comp 565 Vahe Karamian\Project1\main.cpp(191,51): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Homework\Tigran\Comp 565 Vahe Karamian\Project1\main.cpp(192,51): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+  Project1.vcxproj -> D:\Homework\Tigran\Comp 565 Vahe Karamian\Project1\x64\Debug\Project1.exe
