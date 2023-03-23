@@ -3004,6 +3004,7 @@ MonoBehaviour:
   blackQueen: {fileID: 8902938868310227934, guid: 1837be77a5050404e86d85f42ab1c822, type: 3}
   whitePiece: {fileID: 679328966378867346, guid: 4f06461f7db354742b8567912860365f, type: 3}
   blackPiece: {fileID: 3185338048706438296, guid: 861c3bdab70f3e04abf165fa5fff0031, type: 3}
+  visualizePiece: {fileID: 8334148596646847005, guid: f69ce5a9c5f196048b1e321cb7857e64, type: 3}
 --- !u!65 &2073540186
 BoxCollider:
   m_ObjectHideFlags: 0
