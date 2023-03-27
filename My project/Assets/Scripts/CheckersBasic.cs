@@ -15,7 +15,7 @@ public class CheckersBasic : MonoBehaviour
     private Vector3 boardCornerrightupper = new Vector3(-0.216f, 0.1f, -0.259f);
     private Vector3[,] postionCoordinates = new Vector3[8, 8];
 
-
+    bool pickPiece = false;
     void Start()
     {
         boardInitialize();
@@ -125,7 +125,19 @@ public class CheckersBasic : MonoBehaviour
         }
 
         visualization.transform.localPosition = postionCoordinates[(int)position.x, (int)position.y];
+        movePiece((int)position.x, (int)position.y, pieces[(int)position.x, (int)position.y]);
+        
         Debug.Log(convertToVector3(position));
+    }
+
+    private List<Vector2> movePiece(int x, int y, GameObject type)
+    { 
+        if(type.name == "WhitePiece(Clone)" || type.GetInstanceID() == whitePiece.GetInstanceID())
+        {
+            
+            Debug.Log("White");
+        }
+        return null;
     }
 
     private Vector3 convertToVector3(Vector2 v)
