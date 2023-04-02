@@ -1,8 +1,9 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-struct CheckersPiece {
+public struct CheckersPiece {
     public bool IsWhite;
     public bool IsKing;
     public bool IsAlive;
@@ -16,135 +17,209 @@ struct CheckersPiece {
     }
 }
 
-public class GameLogic : MonoBehaviour
+public class GameLogic
 {
     CheckersPiece[,] board;
+    public CheckersPiece empty;
+    public bool turnWhite; //indicates if it's white's turn
+    public int whitePieces; //# white pieces
+    public int blackPieces;//# black pieces
+    public bool mustCapture;// does the player have to capture?
+    
     // Start is called before the first frame update
-    void Start()
+    public GameLogic()
     {
+        //setup board
         board = new CheckersPiece[8, 8];
         InitBoard();
         PrintBoard();
-    }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-    CheckersPiece GetPieceAt(Vector2Int position)
-    {
-        return board[position.x, position.y];
-    }
-    Vector2Int[] CheckMovement(CheckersPiece current)
-    {
-        Vector2Int currentPos = current.position;
-
-        CheckersPiece empty; //set the empty piece
+        //setup empty piece
         empty.IsAlive = false;
         empty.IsKing = false;
         empty.IsWhite = false;
-        empty.position = new Vector2Int(-1, -1);
+        empty.position = new Vector2Int(-3, -3);
 
-        bool includesCapture = false; // used to force player to capture if there's a capture
-        List<Vector2Int> movePositions = new List<Vector2Int>(); // set of normal directional moves that a piece can make
-        List<Vector2Int> capturePositions = new List<Vector2Int>(); // set of capturing moves a piece can make
+        //setup game state
+        turnWhite = true;
+        mustCapture = false;
+        whitePieces = 12;
+        blackPieces = 12;
+        
+    }
 
-        Vector2Int enemyRight = new Vector2Int(-1,-1); // used to store an up-right enemy's piece's position
-        Vector2Int enemyLeft = new Vector2Int(-1, -1); // used to store an up-left enemy's piece's position
+    // Update is called once per frame
+    public CheckersPiece GetPieceAt(Vector2Int position)
+    {
+        return board[position.x, position.y];
+    }
+    public Vector2Int[] CheckMovement(CheckersPiece current)
+    {
+        
+        List<Vector2Int> list = new List<Vector2Int>();
+        Vector2Int currentPos = current.position;
+        
+
+        bool canLeft = true;
+        bool canRight = true;
 
         int flipVert = 1;
         if (!current.IsWhite) flipVert = -1; // flips which way is forward based on if a piece is white or black
 
-        //check if diagonals are empty and not beyond the edge
-        if (currentPos.x + 1 < 7 && currentPos.y + (1*flipVert) < 8 && currentPos.y + (1*flipVert) >= 0)// right side not on edge
-        { 
-            if (board[(currentPos.x + 1), (currentPos.y + (1 * flipVert))].position == empty.position) //up right empty
-            {
-                //The position up-right of current piece is empty
-                movePositions.Add(new Vector2Int((currentPos.x + 1), (currentPos.y + (1 * flipVert))));
+        if (currentPos.x-1 < 0) { //Checks if it's against the left edge
+            canLeft = false;
+        }
+        if (currentPos.x+1 > 7) { //Checks if it's against the right edge
+            canRight = false;
+        }
 
-            } else { // up right has enemy
-                if (board[(currentPos.x + 1), (currentPos.y + (1 * flipVert))].IsWhite != current.IsWhite)
-                {
-                    enemyRight = new Vector2Int(currentPos.x+1, currentPos.y + (1 * flipVert));
-                }
+        //Checks if it can move left and if the forward left space is empty
+            // if so, add to possible spaces array
+        if (canLeft)
+        {
+            Debug.Log(GetPieceAt(new Vector2Int(currentPos.x-1, currentPos.y + flipVert)).position);
+            if(GetPieceAt(new Vector2Int(currentPos.x-1, currentPos.y + flipVert)).position == empty.position)
+            {
+                Debug.Log("Adding Left");
+                list.Add(new Vector2Int (currentPos.x-1, currentPos.y + flipVert));
             }
         }
-        if(currentPos.x - 1 > 0 && currentPos.y + (1*flipVert) < 8 && currentPos.y + (1*flipVert) >= 0) //left side not on edge
+        //Checks if it can move right and if the forward right space is empty
+            // if so, add to possible spaces array
+        if (canRight)
         {
-            if (board[(currentPos.x - 1), (currentPos.y + (1 * flipVert))].position == empty.position)
+            if (GetPieceAt(new Vector2Int(currentPos.x+1, currentPos.y + flipVert)).position == empty.position)
             {
-                //The position up-left of current piece is empty
-                movePositions.Add(new Vector2Int((currentPos.x - 1), (currentPos.y + (1 * flipVert))));
-
-            } else {
-                if (board[(currentPos.x - 1), (currentPos.y + (1 * flipVert))].IsWhite != current.IsWhite)
-                {
-                    enemyLeft = new Vector2Int(currentPos.x-1, currentPos.y + (1 * flipVert));
-                }
-            }
-        }
-        if (enemyRight != new Vector2Int(-1,-1))
-        {
-            while (getEnemyCapturable("right", enemyRight))
-            {
-                includesCapture = true;
-                capturePositions.Add(enemyRight + new Vector2Int(1, flipVert));
-                enemyRight = (enemyRight + new Vector2Int(2, (2*flipVert)));
-            }
-        }
-        if (enemyLeft != new Vector2Int(-1,-1))
-        {
-            while (getEnemyCapturable("left", enemyLeft))
-            {
-                includesCapture = true;
-                capturePositions.Add(enemyLeft + new Vector2Int(-1, flipVert));
-                enemyLeft = (enemyLeft + new Vector2Int(-2, (2*flipVert)));
+                Debug.Log("Adding Right");
+                list.Add(new Vector2Int (currentPos.x+1, currentPos.y + flipVert));
             }
         }
 
-        bool getEnemyCapturable(string direction, Vector2Int position)
+        //If piece is king, checks spaces behind for movement, adds them to the list
+        if(current.IsKing)
         {
-            if (board[position.x, position.y].position == empty.position || board[position.x, position.y].IsWhite == current.IsWhite)
+            if (canLeft && GetPieceAt(new Vector2Int(currentPos.x-1, currentPos.y + flipVert*-1)).position == empty.position)
             {
-                return false;
+                list.Add(new Vector2Int (currentPos.x-1, currentPos.y + flipVert*-1));
             }
-
-            int directionVal = 1;
-            if (direction == "left") directionVal = -1;
-
-            if (position != new Vector2Int(-1,-1) && position.y + (1*flipVert) < 8 && position.y + (1*flipVert) >= 0)
+            if (canRight && GetPieceAt(new Vector2Int(currentPos.x+1, currentPos.y + flipVert*-1)).position == empty.position)
             {
-                if (board[(position.x + (1*directionVal)), (position.y + (1 * flipVert))].position == empty.position)
-                {
-                    //The position through enemy piece is empty
-                    return true;
-                }
+                list.Add(new Vector2Int (currentPos.x+1, currentPos.y + flipVert*-1));
             }
-            return false;
         }
-        
-        if (!includesCapture)
-        {
-            return movePositions.ToArray();
-        } else {
-            return capturePositions.ToArray();
-        }
+        Debug.Log(list);
+        return list.ToArray();
 
     }
-    void PrintBoard()
+
+    public void MovePiece(CheckersPiece current, Vector2Int position)
     {
-        CheckersPiece empty;
-        empty.IsAlive = false;
-        empty.IsKing = false;
-        empty.IsWhite = false;
-        empty.position = new Vector2Int(-1, -1);
+        
+        //checks if current piece can move to the desired location
+        bool canMove = Array.Exists(CheckMovement(current), element => element == position);
+        //if it can AND if the color matches the player turn, move the piece
+        if (canMove && current.IsWhite == turnWhite)
+        {
+            board[current.position.x, current.position.y] = empty;
+            board[position.x, position.y] = current;
+            current.position = position;
+
+        }
+
+        turnWhite = !turnWhite;
+        return;
+    }
+
+    public void CheckCapturable()
+    {
+        int flipVert = 1;
+        if (!turnWhite) flipVert = -1; // flips which way is forward based on if a piece is white or black
+        foreach (CheckersPiece piece in board)
+        {
+            if (piece.IsWhite == turnWhite)
+            {
+                if (turnWhite)
+                {
+                    if (piece.position.x - 2 <= 0 && piece.position.y + 2*flipVert <= 7)
+                    {
+                        if (board[piece.position.x - 1, piece.position.y + flipVert].position != empty.position && board[piece.position.x - 1, piece.position.y + flipVert].IsWhite != piece.IsWhite && board[piece.position.x-2,piece.position.y + 2*flipVert].position == empty.position)
+                        {
+                            //CAN CAPTURE UP LEFT PIECE
+                        }
+                    }
+                    if (piece.position.x + 2 <= 7 && piece.position.y + 2*flipVert <= 7)
+                    {
+                        if (board[piece.position.x + 1, piece.position.y + flipVert].position != empty.position && board[piece.position.x + 1, piece.position.y + flipVert].IsWhite != piece.IsWhite && board[piece.position.x+2,piece.position.y + 2*flipVert].position == empty.position)
+                        {
+                            //CAN CAPTURE UP RIGHT PIECE
+                        }
+                    }
+
+                    //CHECK KING DIRECTION
+                    if (piece.IsKing && piece.position.x - 2 <= 0 && piece.position.y - 2*flipVert >= 0)
+                    {
+                        if (board[piece.position.x - 1, piece.position.y - flipVert].position != empty.position && board[piece.position.x - 1, piece.position.y - flipVert].IsWhite != piece.IsWhite && board[piece.position.x-2,piece.position.y - 2*flipVert].position == empty.position)
+                        {
+                            //CAN CAPTURE BACK LEFT PIECE
+                        }
+                    }
+                    if (piece.IsKing && piece.position.x + 2 <= 7 && piece.position.y + 2*flipVert >= 0)
+                    {
+                        if (board[piece.position.x + 1, piece.position.y - flipVert].position != empty.position && board[piece.position.x + 1, piece.position.y - flipVert].IsWhite != piece.IsWhite && board[piece.position.x+2,piece.position.y - 2*flipVert].position == empty.position)
+                        {
+                            //CAN CAPTURE UP RIGHT PIECE
+                        }
+                    }
+
+                    
+                } else { //NOT WHITE TURN
+                    if (piece.position.x - 2 <= 0 && piece.position.y + 2*flipVert >= 0)
+                    {
+                        if (board[piece.position.x - 1, piece.position.y + flipVert].position != empty.position && board[piece.position.x - 1, piece.position.y + flipVert].IsWhite != piece.IsWhite && board[piece.position.x-2,piece.position.y + 2*flipVert].position == empty.position)
+                        {
+                            //CAN CAPTURE UP LEFT PIECE
+                        }
+                    }
+                    if (piece.position.x + 2 <= 7 && piece.position.y + 2*flipVert >= 0)
+                    {
+                        if (board[piece.position.x + 1, piece.position.y + flipVert].position != empty.position && board[piece.position.x + 1, piece.position.y + flipVert].IsWhite != piece.IsWhite && board[piece.position.x+2,piece.position.y + 2*flipVert].position == empty.position)
+                        {
+                            //CAN CAPTURE UP RIGHT PIECE
+                        }
+                    }
+
+                    //CHECK KING DIRECTION
+                    if (piece.IsKing && piece.position.x - 2 <= 0 && piece.position.y - 2*flipVert <= 7)
+                    {
+                        if (board[piece.position.x - 1, piece.position.y - flipVert].position != empty.position && board[piece.position.x - 1, piece.position.y - flipVert].IsWhite != piece.IsWhite && board[piece.position.x-2,piece.position.y - 2*flipVert].position == empty.position)
+                        {
+                            //CAN CAPTURE BACK LEFT PIECE
+                        }
+                    }
+                    if (piece.IsKing && piece.position.x + 2 <= 7 && piece.position.y + 2*flipVert <= 7)
+                    {
+                        if (board[piece.position.x + 1, piece.position.y - flipVert].position != empty.position && board[piece.position.x + 1, piece.position.y - flipVert].IsWhite != piece.IsWhite && board[piece.position.x+2,piece.position.y - 2*flipVert].position == empty.position)
+                        {
+                            //CAN CAPTURE UP RIGHT PIECE
+                        }
+                    }
+
+                }
+            }
+        }
+    }
+    public void CapturePiece(CheckersPiece current, string direction)
+    {
+        return;
+    }
+
+    public void PrintBoard()
+    {
         string toPrint = "";
         
-        for (int i=0; i<8; i++)
+        for (int j=0; j<8; j++)
         {
-            for (int j=0; j<8; j++)
+            for (int i=0; i<8; i++)
             {
                 if (board[i,j].position == empty.position)
                 {
@@ -165,19 +240,14 @@ public class GameLogic : MonoBehaviour
 
         return;
     }
-    void InitBoard()
+    public void InitBoard()
     {
         CheckersPiece current;
-        CheckersPiece empty;
-        empty.IsAlive = false;
-        empty.IsKing = false;
-        empty.IsWhite = false;
-        empty.position = new Vector2Int(-1, -1);
-        for (int i=0; i<2; i++)
+        for (int j=0; j<3; j++)
         {
-            for (int j=0; j<8; j++)
+            for (int i=0; i<8; i++)
             {   
-                if (i%2 == 0 && j%2 == 0 || i%2 == 1 && j%2 ==1)
+                if (i%2 == 0 && j%2 == 1 || i%2 == 1 && j%2 == 0)
                 {
                     current.IsWhite = true;
                     current.IsAlive = true;
@@ -190,22 +260,22 @@ public class GameLogic : MonoBehaviour
                 }
             }
         }
-        for (int i=2; i<5; i++)
+        for (int j=3; j<5; j++)
         {
-            for (int j=0; j<8; j++)
+            for (int i=0; i<8; i++)
             {
                 board[i,j] = empty;
             }
         }
-        for (int i=5; i<8; i++)
+        for (int j=5; j<8; j++)
         {
-            for (int j=0; j<8; j++)
+            for (int i=0; i<8; i++)
             {   
                 if (i%2 == 1 && j%2 == 0 || i%2 == 0 && j%2 ==1)
                 {
                     current.IsWhite = false;
                     current.IsAlive = true;
-                    current.IsKing = true;
+                    current.IsKing = false;
                     current.position = new Vector2Int(i,j);
 
                     board[i,j] = current;
