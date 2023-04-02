@@ -130,21 +130,19 @@ public class GameLogic
         return;
     }
 
-    public void CheckCapturable()
+    public void CheckCapturablePiece(CheckersPiece piece)
     {
         int flipVert = 1;
         if (!turnWhite) flipVert = -1; // flips which way is forward based on if a piece is white or black
-        foreach (CheckersPiece piece in board)
-        {
-            if (piece.IsWhite == turnWhite)
-            {
-                if (turnWhite)
+
+        if (turnWhite)
                 {
                     if (piece.position.x - 2 <= 0 && piece.position.y + 2*flipVert <= 7)
                     {
                         if (board[piece.position.x - 1, piece.position.y + flipVert].position != empty.position && board[piece.position.x - 1, piece.position.y + flipVert].IsWhite != piece.IsWhite && board[piece.position.x-2,piece.position.y + 2*flipVert].position == empty.position)
                         {
                             //CAN CAPTURE UP LEFT PIECE
+                            mustCapture = true;
                         }
                     }
                     if (piece.position.x + 2 <= 7 && piece.position.y + 2*flipVert <= 7)
@@ -152,6 +150,7 @@ public class GameLogic
                         if (board[piece.position.x + 1, piece.position.y + flipVert].position != empty.position && board[piece.position.x + 1, piece.position.y + flipVert].IsWhite != piece.IsWhite && board[piece.position.x+2,piece.position.y + 2*flipVert].position == empty.position)
                         {
                             //CAN CAPTURE UP RIGHT PIECE
+                            mustCapture = true;
                         }
                     }
 
@@ -161,6 +160,7 @@ public class GameLogic
                         if (board[piece.position.x - 1, piece.position.y - flipVert].position != empty.position && board[piece.position.x - 1, piece.position.y - flipVert].IsWhite != piece.IsWhite && board[piece.position.x-2,piece.position.y - 2*flipVert].position == empty.position)
                         {
                             //CAN CAPTURE BACK LEFT PIECE
+                            mustCapture = true;
                         }
                     }
                     if (piece.IsKing && piece.position.x + 2 <= 7 && piece.position.y + 2*flipVert >= 0)
@@ -168,6 +168,7 @@ public class GameLogic
                         if (board[piece.position.x + 1, piece.position.y - flipVert].position != empty.position && board[piece.position.x + 1, piece.position.y - flipVert].IsWhite != piece.IsWhite && board[piece.position.x+2,piece.position.y - 2*flipVert].position == empty.position)
                         {
                             //CAN CAPTURE UP RIGHT PIECE
+                            mustCapture = true;
                         }
                     }
 
@@ -178,6 +179,7 @@ public class GameLogic
                         if (board[piece.position.x - 1, piece.position.y + flipVert].position != empty.position && board[piece.position.x - 1, piece.position.y + flipVert].IsWhite != piece.IsWhite && board[piece.position.x-2,piece.position.y + 2*flipVert].position == empty.position)
                         {
                             //CAN CAPTURE UP LEFT PIECE
+                            mustCapture = true;
                         }
                     }
                     if (piece.position.x + 2 <= 7 && piece.position.y + 2*flipVert >= 0)
@@ -185,6 +187,7 @@ public class GameLogic
                         if (board[piece.position.x + 1, piece.position.y + flipVert].position != empty.position && board[piece.position.x + 1, piece.position.y + flipVert].IsWhite != piece.IsWhite && board[piece.position.x+2,piece.position.y + 2*flipVert].position == empty.position)
                         {
                             //CAN CAPTURE UP RIGHT PIECE
+                            mustCapture = true;
                         }
                     }
 
@@ -194,6 +197,7 @@ public class GameLogic
                         if (board[piece.position.x - 1, piece.position.y - flipVert].position != empty.position && board[piece.position.x - 1, piece.position.y - flipVert].IsWhite != piece.IsWhite && board[piece.position.x-2,piece.position.y - 2*flipVert].position == empty.position)
                         {
                             //CAN CAPTURE BACK LEFT PIECE
+                            mustCapture = true;
                         }
                     }
                     if (piece.IsKing && piece.position.x + 2 <= 7 && piece.position.y + 2*flipVert <= 7)
@@ -201,16 +205,39 @@ public class GameLogic
                         if (board[piece.position.x + 1, piece.position.y - flipVert].position != empty.position && board[piece.position.x + 1, piece.position.y - flipVert].IsWhite != piece.IsWhite && board[piece.position.x+2,piece.position.y - 2*flipVert].position == empty.position)
                         {
                             //CAN CAPTURE UP RIGHT PIECE
+                            mustCapture = true;
                         }
                     }
 
                 }
+    }
+    public void CheckCapturableBoard()
+    {
+        foreach (CheckersPiece piece in board)
+        {
+            if (piece.IsWhite == turnWhite)
+            {
+                CheckCapturablePiece(piece);
             }
         }
     }
-    public void CapturePiece(CheckersPiece current, string direction)
+
+
+
+    public void CapturePiece(CheckersPiece current, CheckersPiece captured, Vector2Int position)
     {
-        return;
+        
+        board[current.position.x, current.position.y] = empty;
+        board[position.x, position.y] = current;
+        current.position = position;
+
+        if (captured.IsWhite)
+        {
+            whitePieces -=1;
+        } else {
+            blackPieces -=1;
+        }
+        board[captured.position.x, captured.position.y] = empty;
     }
 
     public void PrintBoard()
