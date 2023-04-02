@@ -3,19 +3,25 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UIElements;
+using static UnityEditor.PlayerSettings;
 
 public class CheckersBasic : MonoBehaviour
 {
     public GameObject whiteQueen, blackQueen, whitePiece, blackPiece, visualizePiece;
-    GameLogic game = new GameLogic();   
+    GameLogic game = new GameLogic();
     private GameObject[,] pieces = new GameObject[8, 8];
 
     public GameObject visualization;
     private Vector3 boardCornerleftbottom = new Vector3(-0.210f, 0.1f, 0.16f);
     private Vector3 boardCornerrightupper = new Vector3(-0.216f, 0.1f, -0.259f);
     private Vector3[,] postionCoordinates = new Vector3[8, 8];
-    private GameObject[] visualizationPos = new GameObject[0];
-    bool pickPiece = false;
+
+    //Two arrrays used for determing the possibale piece move
+    private GameObject[] visualizationPosPiece = new GameObject[0];
+    Vector2Int[] visualizationPosCoordinates = new Vector2Int[0];
+
+    Vector2Int pickedPiece = new Vector2Int(-1,-1);
     void Start()
     {
         boardInitialize();
@@ -37,13 +43,18 @@ public class CheckersBasic : MonoBehaviour
         if (Input.GetMouseButtonUp(0))
         {
             Debug.Log("Cursor position at " + cursorPosition());
+
+            //Moving the selected piece if possiable
+            movePiece(cursorPosition());
+
+            //Shows the user where piece is able to move
             showPossiblePositions(cursorPosition());
         }
-        //userGuide();
+        userGuide();
 
 
     }
-    
+
 
 
     private void generatePiece(GameObject pieceType, int x, int y)
@@ -52,7 +63,7 @@ public class CheckersBasic : MonoBehaviour
         go.transform.SetParent(transform);
         go.transform.localPosition = postionCoordinates[x, y];
         go.layer = LayerMask.NameToLayer("Ignore Raycast");
-        pieces[x,y] = go;
+        pieces[x, y] = go;
     }
 
     //Puting pieces on there places to start the game
@@ -89,7 +100,7 @@ public class CheckersBasic : MonoBehaviour
             }
         }
     }
-    
+
     //Return the board cell where cursor is pointing
     private Vector2Int cursorPosition()
     {
@@ -129,36 +140,68 @@ public class CheckersBasic : MonoBehaviour
         }
 
         visualization.transform.localPosition = postionCoordinates[(int)position.x, (int)position.y];
-        
+
         Debug.Log("Guide position is " + convertToVector3(position));
     }
 
-    private List<Vector2> showPossiblePositions(Vector2Int pos)
-    { 
-            if (game.GetPieceAt(pos).position == game.empty.position)
-            {
-                Debug.Log("Selected empty piece.");
-                return null;
-            }
-            Vector2Int[] arr = game.CheckMovement(game.GetPieceAt(pos));
-            Debug.Log("Available move positions is " +arr.Length);   
-            visualizationPos = new GameObject[arr.Length];
-            for(int i = 0; i < arr.Length; i++)
-            {
-                visualizationPos[i] = GameObject.Instantiate(visualizePiece);
-                visualizationPos[i].transform.SetParent(transform);
-                visualizationPos[i].layer = LayerMask.NameToLayer("Ignore Raycast");
-            }
+    private void showPossiblePositions(Vector2Int pos)
+    {
+        //cleun up visualizationPosPiece
+        for (int i = 0; i < visualizationPosPiece.Length; i++)
+        {
+            Destroy(visualizationPosPiece[i]);
+        }
 
-            for(int i = 0; i < arr.Length; i++)
-            {
-                visualizationPos[i].transform.localPosition = postionCoordinates[arr[i].x,arr[i].y];   
-                Debug.Log("Can move to " + arr[i]);
-            }
+        if (game.GetPieceAt(pos).position == game.empty.position)
+        {
+            Debug.Log("Selected empty piece.");
+            pickedPiece = new Vector2Int(-1, -1);
+            return;
+        }
+
+        pickedPiece = pos;
+        visualizationPosCoordinates = game.CheckMovement(game.GetPieceAt(pos));
+        Debug.Log("Available move positions is " + visualizationPosCoordinates.Length);
+
         
-        return null;
+        visualizationPosPiece = new GameObject[visualizationPosCoordinates.Length];
+        for (int i = 0; i < visualizationPosCoordinates.Length; i++)
+        {
+            visualizationPosPiece[i] = GameObject.Instantiate(visualizePiece);
+            visualizationPosPiece[i].transform.SetParent(transform);
+            visualizationPosPiece[i].layer = LayerMask.NameToLayer("Ignore Raycast");
+        }
+
+        for (int i = 0; i < visualizationPosCoordinates.Length; i++)
+        {
+            visualizationPosPiece[i].transform.localPosition = postionCoordinates[visualizationPosCoordinates[i].x, visualizationPosCoordinates[i].y];
+            Debug.Log("Can move to " + visualizationPosCoordinates[i]);
+        }
+
+        return;
     }
 
+
+    private void movePiece(Vector2Int pos)
+    {
+        for (int i = 0; i < visualizationPosPiece.Length; i++)
+        {
+            if (visualizationPosCoordinates[i] == pos)
+            {
+                Destroy(pieces[pickedPiece.x, pickedPiece.y]);
+                generatePiece(blackPiece, pos.x, pos.y);
+
+                game.MovePiece(game.GetPieceAt(pickedPiece), pos);
+
+                for (int j = 0; i < visualizationPosPiece.Length; j++)
+                {
+                    Destroy(visualizationPosPiece[j]);
+                }
+                visualizationPosPiece = new GameObject[0];
+                return;
+            }
+        }
+    }
     private Vector3 convertToVector3(Vector2 v)
     {
         return new Vector3(v.x, boardCornerleftbottom.y, v.y);
