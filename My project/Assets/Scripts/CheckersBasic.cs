@@ -45,10 +45,11 @@ public class CheckersBasic : MonoBehaviour
             Debug.Log("Cursor position at " + cursorPosition());
 
             //Moving the selected piece if possiable
-            movePiece(cursorPosition());
-
-            //Shows the user where piece is able to move
-            showPossiblePositions(cursorPosition());
+            if (!movePiece(cursorPosition()))
+            {
+                //Shows the user where piece is able to move
+                showPossiblePositions(cursorPosition());
+            }
         }
         userGuide();
 
@@ -182,7 +183,7 @@ public class CheckersBasic : MonoBehaviour
     }
 
 
-    private void movePiece(Vector2Int pos)
+    private bool movePiece(Vector2Int pos)
     {
         for (int i = 0; i < visualizationPosPiece.Length; i++)
         {
@@ -193,14 +194,15 @@ public class CheckersBasic : MonoBehaviour
 
                 game.MovePiece(game.GetPieceAt(pickedPiece), pos);
 
-                for (int j = 0; i < visualizationPosPiece.Length; j++)
+                for (int j = 0; j < visualizationPosPiece.Length; j++)
                 {
                     Destroy(visualizationPosPiece[j]);
                 }
                 visualizationPosPiece = new GameObject[0];
-                return;
+                return true;
             }
         }
+        return false;
     }
     private Vector3 convertToVector3(Vector2 v)
     {
