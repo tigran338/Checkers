@@ -124,9 +124,10 @@ public class GameLogic
         //if it can AND if the color matches the player turn, move the piece
         if (canMove && current.IsWhite == turnWhite)
         {
-            board[current.position.x, current.position.y] = empty;
             board[position.x, position.y] = current;
-            current.position = position;
+            board[current.position.x, current.position.y] = empty;
+            
+            board[position.x, position.y].position = position;
 
         }
 
