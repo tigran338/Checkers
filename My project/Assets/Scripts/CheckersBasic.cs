@@ -8,7 +8,7 @@ using static UnityEditor.PlayerSettings;
 
 public class CheckersBasic : MonoBehaviour
 {
-    public GameObject whiteQueen, blackQueen, whitePiece, blackPiece, visualizePiece;
+    public GameObject whiteKing, blackKing, whitePiece, blackPiece, visualizePiece;
     GameLogic game = new GameLogic();
     private GameObject[,] pieces = new GameObject[8, 8];
 
@@ -162,6 +162,8 @@ public class CheckersBasic : MonoBehaviour
 
         pickedPiece = pos;
         visualizationPosCoordinates = game.CheckMovement(game.GetPieceAt(pos));
+        if (visualizationPosCoordinates == null)
+            return;
         Debug.Log("Available move positions is " + visualizationPosCoordinates.Length);
 
         
@@ -190,8 +192,25 @@ public class CheckersBasic : MonoBehaviour
             if (visualizationPosCoordinates[i] == pos)
             {
                 Destroy(pieces[pickedPiece.x, pickedPiece.y]);
-                generatePiece(blackPiece, pos.x, pos.y);
+                if (game.GetPieceAt(pickedPiece).IsWhite)
+                {
+                    if (game.GetPieceAt(pickedPiece).IsKing)
+                        generatePiece(whiteKing, pos.x, pos.y);
+                    else
+                        generatePiece(whitePiece, pos.x, pos.y);
+                }
+                else
+                {
+                    if (game.GetPieceAt(pickedPiece).IsKing)
+                        generatePiece(blackKing, pos.x, pos.y);
+                    else
+                        generatePiece(blackPiece, pos.x, pos.y);
+                }
 
+                
+                
+
+                
                 game.MovePiece(game.GetPieceAt(pickedPiece), pos);
 
                 for (int j = 0; j < visualizationPosPiece.Length; j++)
