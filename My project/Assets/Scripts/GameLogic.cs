@@ -142,6 +142,7 @@ public class GameLogic
     public (CheckersPiece, CheckersPiece, Vector2Int)[] CheckCapturablePiece(CheckersPiece piece)
     {
         int numberCapturable = 0;
+
         (CheckersPiece, CheckersPiece, Vector2Int)[] output = null;
         int flipVert = 1;
         if (!turnWhite) flipVert = -1; // flips which way is forward based on if a piece is white or black
@@ -267,6 +268,12 @@ public class GameLogic
             blackPieces -=1;
         }
         board[captured.position.x, captured.position.y] = empty;
+
+        if (CheckCapturablePiece(current) == null)
+        {
+            turnWhite = !turnWhite;
+            mustCapture = false;
+        }
     }
 
     public void PrintBoard()
