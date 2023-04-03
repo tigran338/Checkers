@@ -254,7 +254,7 @@ public class GameLogic
         
         board[current.position.x, current.position.y] = empty;
         board[position.x, position.y] = current;
-        current.position = position;
+        board[position.x, position.y].position = position;
 
         if (captured.IsWhite)
         {
