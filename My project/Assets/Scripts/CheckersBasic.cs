@@ -160,6 +160,17 @@ public class CheckersBasic : MonoBehaviour
             return;
         }
 
+        //Capture the piece
+        game.CheckCapturableBoard();
+        if (game.mustCapture)
+        {
+            var arr = game.CheckCapturablePiece(game.GetPieceAt(pos));
+
+
+            return;
+        }
+
+        //_____________________
         pickedPiece = pos;
         visualizationPosCoordinates = game.CheckMovement(game.GetPieceAt(pos));
         if (visualizationPosCoordinates == null)
