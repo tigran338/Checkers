@@ -136,6 +136,7 @@ public class GameLogic
         }
 
         turnWhite = !turnWhite;
+        CheckCapturableBoard();
         return;
     }
 
@@ -273,6 +274,7 @@ public class GameLogic
         {
             turnWhite = !turnWhite;
             mustCapture = false;
+            CheckCapturableBoard();
         }
     }
 
