@@ -160,18 +160,29 @@ public class CheckersBasic : MonoBehaviour
             return;
         }
 
+        pickedPiece = pos;
+        //game.CheckCapturableBoard();
         //Capture the piece
-        game.CheckCapturableBoard();
         if (game.mustCapture)
         {
-            var arr = game.CheckCapturablePiece(game.GetPieceAt(pos));
+            (CheckersPiece, CheckersPiece, Vector2Int)[] arr = game.CheckCapturablePiece(game.GetPieceAt(pos));
+            //arr[0].Item1
+
+            visualizationPosPiece = new GameObject[arr.Length];
+            for (int i = 0; i < arr.Length; i++)
+            {
+                visualizationPosPiece[i] = GameObject.Instantiate(visualizePiece);
+                visualizationPosPiece[i].transform.SetParent(transform);
+                visualizationPosPiece[i].layer = LayerMask.NameToLayer("Ignore Raycast");
+
+                visualizationPosPiece[i].transform.localPosition = postionCoordinates[arr[i].Item3.x, arr[i].Item3.y];
+            }
 
 
             return;
         }
 
         //_____________________
-        pickedPiece = pos;
         visualizationPosCoordinates = game.CheckMovement(game.GetPieceAt(pos));
         if (visualizationPosCoordinates == null)
             return;
@@ -219,16 +230,14 @@ public class CheckersBasic : MonoBehaviour
                 }
 
                 
-                
-
-                
-                game.MovePiece(game.GetPieceAt(pickedPiece), pos);
 
                 for (int j = 0; j < visualizationPosPiece.Length; j++)
                 {
                     Destroy(visualizationPosPiece[j]);
                 }
                 visualizationPosPiece = new GameObject[0];
+
+                game.MovePiece(game.GetPieceAt(pickedPiece), pos);
                 return true;
             }
         }
