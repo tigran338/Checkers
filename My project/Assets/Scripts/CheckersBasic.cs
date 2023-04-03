@@ -70,9 +70,9 @@ public class CheckersBasic : MonoBehaviour
     private void boardInitialize()
     {
         //Fill up postionCoordinates array
-        for (int j = 0; j < 8; j++)
+        for (int i = 0; i < 8; i++)
         {
-            for (int i = 0; i < 8; i++)
+            for (int j = 0; j < 8; j++)
             {
                 pieces[i, j] = null;
                 postionCoordinates[i, j] = boardCornerleftbottom + new Vector3(i * (Math.Abs(boardCornerleftbottom.x) + Math.Abs(boardCornerrightupper.x)) / 7, 0, 0) - new Vector3(0, 0, j * (Math.Abs(boardCornerleftbottom.z) + Math.Abs(boardCornerrightupper.z)) / 7);
@@ -141,7 +141,7 @@ public class CheckersBasic : MonoBehaviour
 
         visualization.transform.localPosition = postionCoordinates[(int)position.x, (int)position.y];
 
-        Debug.Log("Guide position is " + convertToVector3(position));
+        //Debug.Log("Guide position is " + convertToVector3(position));
     }
 
     private void showPossiblePositions(Vector2Int pos)
