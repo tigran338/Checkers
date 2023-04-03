@@ -55,6 +55,10 @@ public class GameLogic
     }
     public Vector2Int[] CheckMovement(CheckersPiece current)
     {
+        if (turnWhite != current.IsWhite)
+        {
+            return null;
+        }
         if (mustCapture == true)
         {
             Debug.Log("Player must capture!");
