@@ -122,7 +122,10 @@ public class GameLogic
 
     public void MovePiece(CheckersPiece current, Vector2Int position)
     {
-        
+        if(mustCapture)
+        {
+            return;
+        }
         //checks if current piece can move to the desired location
         bool canMove = Array.Exists(CheckMovement(current), element => element == position);
         //if it can AND if the color matches the player turn, move the piece
@@ -143,19 +146,18 @@ public class GameLogic
     public (CheckersPiece, CheckersPiece, Vector2Int)[] CheckCapturablePiece(CheckersPiece piece)
     {
         int numberCapturable = 0;
-
-        (CheckersPiece, CheckersPiece, Vector2Int)[] output = null;
+        List<(CheckersPiece, CheckersPiece, Vector2Int)> output = new List<(CheckersPiece, CheckersPiece, Vector2Int)>();
         int flipVert = 1;
         if (!turnWhite) flipVert = -1; // flips which way is forward based on if a piece is white or black
 
         if (turnWhite)
                 {
-                    if (piece.position.x - 2 <= 0 && piece.position.y + 2*flipVert <= 7)
+                    if (piece.position.x - 2 >= 0 && piece.position.y + 2*flipVert <= 7)
                     {
                         if (board[piece.position.x - 1, piece.position.y + flipVert].position != empty.position && board[piece.position.x - 1, piece.position.y + flipVert].IsWhite != piece.IsWhite && board[piece.position.x-2,piece.position.y + 2*flipVert].position == empty.position)
                         {
                             //CAN CAPTURE UP LEFT PIECE
-                            output[numberCapturable] = (piece, board[piece.position.x - 1, piece.position.y + flipVert], new Vector2Int (piece.position.x-2,piece.position.y + 2*flipVert));
+                            output.Add((piece, board[piece.position.x - 1, piece.position.y + flipVert], new Vector2Int (piece.position.x-2,piece.position.y + 2*flipVert)));
                             mustCapture = true;
                             numberCapturable += 1;
                         }
@@ -165,7 +167,11 @@ public class GameLogic
                         if (board[piece.position.x + 1, piece.position.y + flipVert].position != empty.position && board[piece.position.x + 1, piece.position.y + flipVert].IsWhite != piece.IsWhite && board[piece.position.x+2,piece.position.y + 2*flipVert].position == empty.position)
                         {
                             //CAN CAPTURE UP RIGHT PIECE
-                            output[numberCapturable] = (piece, board[piece.position.x + 1, piece.position.y + flipVert], new Vector2Int (piece.position.x+2,piece.position.y + 2*flipVert));
+                            Debug.Log(piece.position.x + " " + piece.position.y);
+                            Debug.Log(board[piece.position.x + 1, piece.position.y + flipVert].position.x + " " + board[piece.position.x + 1, piece.position.y + flipVert].position.y);
+                            Debug.Log(piece);
+                            Debug.Log(board[piece.position.x + 1, piece.position.y + flipVert]);
+                            output.Add((piece, board[piece.position.x + 1, piece.position.y + flipVert], new Vector2Int (piece.position.x+2,piece.position.y + 2*flipVert)));
                             mustCapture = true;
                             numberCapturable += 1;
                         }
@@ -177,7 +183,7 @@ public class GameLogic
                         if (board[piece.position.x - 1, piece.position.y - flipVert].position != empty.position && board[piece.position.x - 1, piece.position.y - flipVert].IsWhite != piece.IsWhite && board[piece.position.x-2,piece.position.y - 2*flipVert].position == empty.position)
                         {
                             //CAN CAPTURE BACK LEFT PIECE
-                            output[numberCapturable] = (piece, board[piece.position.x - 1, piece.position.y - flipVert], new Vector2Int(piece.position.x-2,piece.position.y - 2*flipVert));
+                            output.Add((piece, board[piece.position.x - 1, piece.position.y - flipVert], new Vector2Int(piece.position.x-2,piece.position.y - 2*flipVert)));
                             mustCapture = true;
                             numberCapturable += 1;
                         }
@@ -187,7 +193,7 @@ public class GameLogic
                         if (board[piece.position.x + 1, piece.position.y - flipVert].position != empty.position && board[piece.position.x + 1, piece.position.y - flipVert].IsWhite != piece.IsWhite && board[piece.position.x+2,piece.position.y - 2*flipVert].position == empty.position)
                         {
                             //CAN CAPTURE UP RIGHT PIECE
-                            output[numberCapturable] = (piece, board[piece.position.x + 1, piece.position.y - flipVert], new Vector2Int(piece.position.x+2,piece.position.y - 2*flipVert));
+                            output.Add((piece, board[piece.position.x + 1, piece.position.y - flipVert], new Vector2Int(piece.position.x+2,piece.position.y - 2*flipVert)));
                             mustCapture = true;
                             numberCapturable += 1;
                         }
@@ -195,12 +201,12 @@ public class GameLogic
 
                     
                 } else { //NOT WHITE TURN
-                    if (piece.position.x - 2 <= 0 && piece.position.y + 2*flipVert >= 0)
+                    if (piece.position.x - 2 >= 0 && piece.position.y + 2*flipVert >= 0)
                     {
                         if (board[piece.position.x - 1, piece.position.y + flipVert].position != empty.position && board[piece.position.x - 1, piece.position.y + flipVert].IsWhite != piece.IsWhite && board[piece.position.x-2,piece.position.y + 2*flipVert].position == empty.position)
                         {
                             //CAN CAPTURE UP LEFT PIECE
-                            output[numberCapturable] = (piece, board[piece.position.x - 1, piece.position.y + flipVert], new Vector2Int(piece.position.x-2,piece.position.y + 2*flipVert));
+                            output.Add((piece, board[piece.position.x - 1, piece.position.y + flipVert], new Vector2Int(piece.position.x-2,piece.position.y + 2*flipVert)));
                             mustCapture = true;
                             numberCapturable += 1;
                         }
@@ -210,7 +216,7 @@ public class GameLogic
                         if (board[piece.position.x + 1, piece.position.y + flipVert].position != empty.position && board[piece.position.x + 1, piece.position.y + flipVert].IsWhite != piece.IsWhite && board[piece.position.x+2,piece.position.y + 2*flipVert].position == empty.position)
                         {
                             //CAN CAPTURE UP RIGHT PIECE
-                            output[numberCapturable] = (piece, board[piece.position.x + 1, piece.position.y + flipVert], new Vector2Int(piece.position.x+2,piece.position.y + 2*flipVert));
+                            output.Add((piece, board[piece.position.x + 1, piece.position.y + flipVert], new Vector2Int(piece.position.x+2,piece.position.y + 2*flipVert)));
                             mustCapture = true;
                             numberCapturable += 1;
                         }
@@ -222,7 +228,7 @@ public class GameLogic
                         if (board[piece.position.x - 1, piece.position.y - flipVert].position != empty.position && board[piece.position.x - 1, piece.position.y - flipVert].IsWhite != piece.IsWhite && board[piece.position.x-2,piece.position.y - 2*flipVert].position == empty.position)
                         {
                             //CAN CAPTURE BACK LEFT PIECE
-                            output[numberCapturable] = (piece, board[piece.position.x - 1, piece.position.y - flipVert], new Vector2Int(piece.position.x-2,piece.position.y - 2*flipVert));
+                            output.Add((piece, board[piece.position.x - 1, piece.position.y - flipVert], new Vector2Int(piece.position.x-2,piece.position.y - 2*flipVert)));
                             mustCapture = true;
                             numberCapturable += 1;
                         }
@@ -232,7 +238,7 @@ public class GameLogic
                         if (board[piece.position.x + 1, piece.position.y - flipVert].position != empty.position && board[piece.position.x + 1, piece.position.y - flipVert].IsWhite != piece.IsWhite && board[piece.position.x+2,piece.position.y - 2*flipVert].position == empty.position)
                         {
                             //CAN CAPTURE UP RIGHT PIECE
-                            output[numberCapturable] = (piece, board[piece.position.x + 1, piece.position.y - flipVert], new Vector2Int(piece.position.x+2,piece.position.y - 2*flipVert));
+                            output.Add((piece, board[piece.position.x + 1, piece.position.y - flipVert], new Vector2Int(piece.position.x+2,piece.position.y - 2*flipVert)));
                             mustCapture = true;
                             numberCapturable += 1;
                         }
@@ -240,13 +246,14 @@ public class GameLogic
 
                 }
         //OUTPUT IS AN ARRAY OF TUPLES IN FORM (CURRENT PIECE, CAPTURED PIECE, POSITION TO MOVE TO)
-        return output;
+        if (output != null) return output.ToArray(); else return null;
+
     }
     public void CheckCapturableBoard()
     {
         foreach (CheckersPiece piece in board)
         {
-            if (piece.IsWhite == turnWhite)
+            if (piece.IsWhite == turnWhite && piece.position != empty.position)
             {
                 CheckCapturablePiece(piece);
             }
