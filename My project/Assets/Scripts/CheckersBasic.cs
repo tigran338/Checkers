@@ -20,6 +20,7 @@ public class CheckersBasic : MonoBehaviour
     //Two arrrays used for determing the possibale piece move
     private GameObject[] visualizationPosPiece = new GameObject[0];
     Vector2Int[] visualizationPosCoordinates = new Vector2Int[0];
+    (CheckersPiece, CheckersPiece, Vector2Int)[] arrCapturePieces = null;
 
     Vector2Int pickedPiece = new Vector2Int(-1,-1);
     void Start()
@@ -165,17 +166,18 @@ public class CheckersBasic : MonoBehaviour
         //Capture the piece
         if (game.mustCapture)
         {
-            (CheckersPiece, CheckersPiece, Vector2Int)[] arr = game.CheckCapturablePiece(game.GetPieceAt(pos));
-            //arr[0].Item1
+            arrCapturePieces = game.CheckCapturablePiece(game.GetPieceAt(pos));
 
-            visualizationPosPiece = new GameObject[arr.Length];
-            for (int i = 0; i < arr.Length; i++)
+            visualizationPosPiece = new GameObject[arrCapturePieces.Length];
+            visualizationPosCoordinates = new Vector2Int[arrCapturePieces.Length];
+            for (int i = 0; i < arrCapturePieces.Length; i++)
             {
                 visualizationPosPiece[i] = GameObject.Instantiate(visualizePiece);
                 visualizationPosPiece[i].transform.SetParent(transform);
                 visualizationPosPiece[i].layer = LayerMask.NameToLayer("Ignore Raycast");
 
-                visualizationPosPiece[i].transform.localPosition = postionCoordinates[arr[i].Item3.x, arr[i].Item3.y];
+                visualizationPosPiece[i].transform.localPosition = postionCoordinates[arrCapturePieces[i].Item3.x, arrCapturePieces[i].Item3.y];
+                visualizationPosCoordinates[i] = arrCapturePieces[i].Item3;
             }
 
 
@@ -183,6 +185,7 @@ public class CheckersBasic : MonoBehaviour
         }
 
         //_____________________
+        arrCapturePieces = null;
         visualizationPosCoordinates = game.CheckMovement(game.GetPieceAt(pos));
         if (visualizationPosCoordinates == null)
             return;
@@ -209,6 +212,24 @@ public class CheckersBasic : MonoBehaviour
 
     private bool movePiece(Vector2Int pos)
     {
+        //If must capture
+        if (game.mustCapture)
+        {
+            if(arrCapturePieces == null || arrCapturePieces.Length == 0)
+                return false;
+
+            foreach (var item in arrCapturePieces)
+            {
+                if(item.Item3 == pos)
+                {
+                    pieces[item.Item2.position.x, item.Item2.position.y];
+                    Destroy(item.Item2.position);
+                }
+            }
+            //game.CapturePiece();
+        }
+
+        //__________________________________________________
         for (int i = 0; i < visualizationPosPiece.Length; i++)
         {
             if (visualizationPosCoordinates[i] == pos)
