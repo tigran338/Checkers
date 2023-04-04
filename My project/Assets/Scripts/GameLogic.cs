@@ -8,11 +8,13 @@ public struct CheckersPiece {
     public bool IsKing;
     public bool IsAlive;
     public Vector2Int position;
-    public CheckersPiece(bool isWhite, bool isKing, bool isAlive, Vector2Int position) 
+    public bool JustCaptured;
+    public CheckersPiece(bool isWhite, bool isKing, bool isAlive, bool justCaptured, Vector2Int position) 
     {
         this.IsWhite = isWhite;
         this.IsKing = isKing;
         this.IsAlive = isAlive;
+        this.JustCaptured= justCaptured;
         this.position = position;
     }
 }
@@ -38,6 +40,7 @@ public class GameLogic
         empty.IsAlive = false;
         empty.IsKing = false;
         empty.IsWhite = false;
+        empty.JustCaptured = false;
         empty.position = new Vector2Int(-3, -3);
 
         //setup game state
@@ -178,7 +181,7 @@ public class GameLogic
                     }
 
                     //CHECK KING DIRECTION
-                    if (piece.IsKing && piece.position.x - 2 <= 0 && piece.position.y - 2*flipVert >= 0)
+                    if ((piece.IsKing || piece.JustCaptured) && piece.position.x - 2 <= 0 && piece.position.y - 2*flipVert >= 0)
                     {
                         if (board[piece.position.x - 1, piece.position.y - flipVert].position != empty.position && board[piece.position.x - 1, piece.position.y - flipVert].IsWhite != piece.IsWhite && board[piece.position.x-2,piece.position.y - 2*flipVert].position == empty.position)
                         {
@@ -188,7 +191,7 @@ public class GameLogic
                             numberCapturable += 1;
                         }
                     }
-                    if (piece.IsKing && piece.position.x + 2 <= 7 && piece.position.y + 2*flipVert >= 0)
+                    if ((piece.IsKing || piece.JustCaptured) && piece.position.x + 2 <= 7 && piece.position.y + 2*flipVert >= 0)
                     {
                         if (board[piece.position.x + 1, piece.position.y - flipVert].position != empty.position && board[piece.position.x + 1, piece.position.y - flipVert].IsWhite != piece.IsWhite && board[piece.position.x+2,piece.position.y - 2*flipVert].position == empty.position)
                         {
@@ -223,7 +226,7 @@ public class GameLogic
                     }
 
                     //CHECK KING DIRECTION
-                    if (piece.IsKing && piece.position.x - 2 <= 0 && piece.position.y - 2*flipVert <= 7)
+                    if ((piece.IsKing || piece.JustCaptured) && piece.position.x - 2 >= 0 && piece.position.y - 2*flipVert <= 7)
                     {
                         if (board[piece.position.x - 1, piece.position.y - flipVert].position != empty.position && board[piece.position.x - 1, piece.position.y - flipVert].IsWhite != piece.IsWhite && board[piece.position.x-2,piece.position.y - 2*flipVert].position == empty.position)
                         {
@@ -233,7 +236,7 @@ public class GameLogic
                             numberCapturable += 1;
                         }
                     }
-                    if (piece.IsKing && piece.position.x + 2 <= 7 && piece.position.y + 2*flipVert <= 7)
+                    if ((piece.IsKing || piece.JustCaptured) && piece.position.x + 2 <= 7 && piece.position.y + 2*flipVert <= 7)
                     {
                         if (board[piece.position.x + 1, piece.position.y - flipVert].position != empty.position && board[piece.position.x + 1, piece.position.y - flipVert].IsWhite != piece.IsWhite && board[piece.position.x+2,piece.position.y - 2*flipVert].position == empty.position)
                         {
@@ -246,7 +249,7 @@ public class GameLogic
 
                 }
         //OUTPUT IS AN ARRAY OF TUPLES IN FORM (CURRENT PIECE, CAPTURED PIECE, POSITION TO MOVE TO)
-        if (output != null) return output.ToArray(); else return null;
+        return output.ToArray();
 
     }
     public void CheckCapturableBoard()
@@ -277,8 +280,11 @@ public class GameLogic
         }
         board[captured.position.x, captured.position.y] = empty;
 
-        if (CheckCapturablePiece(current) == null)
+        board[position.x, position.y].JustCaptured = true;
+
+        if (CheckCapturablePiece(board[position.x, position.y]).Length == 0)
         {
+            board[position.x, position.y].JustCaptured = false;
             turnWhite = !turnWhite;
             mustCapture = false;
             CheckCapturableBoard();
@@ -324,6 +330,7 @@ public class GameLogic
                     current.IsWhite = true;
                     current.IsAlive = true;
                     current.IsKing = false;
+                    current.JustCaptured = false;
                     current.position = new Vector2Int(i,j);
 
                     board[i,j] = current;
@@ -348,6 +355,7 @@ public class GameLogic
                     current.IsWhite = false;
                     current.IsAlive = true;
                     current.IsKing = false;
+                    current.JustCaptured = false;
                     current.position = new Vector2Int(i,j);
 
                     board[i,j] = current;
