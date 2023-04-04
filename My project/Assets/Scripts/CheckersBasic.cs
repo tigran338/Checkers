@@ -220,12 +220,33 @@ public class CheckersBasic : MonoBehaviour
 
             foreach (var item in arrCapturePieces)
             {
-                if(item.Item3 == pos)
+                if (item.Item3 == pos)
                 {
-                    pieces[item.Item2.position.x, item.Item2.position.y];
-                    Destroy(item.Item2.position);
+                    Destroy(pieces[pickedPiece.x, pickedPiece.y]);
+                    Destroy(pieces[item.Item2.position.x, item.Item2.position.y]);
+                    pieces[item.Item2.position.x, item.Item2.position.y] = null;
+
+                    if (game.GetPieceAt(pickedPiece).IsWhite)
+                    {
+                        if (game.GetPieceAt(pickedPiece).IsKing)
+                            generatePiece(whiteKing, pos.x, pos.y);
+                        else
+                            generatePiece(whitePiece, pos.x, pos.y);
+                    }
+                    else
+                    {
+                        if (game.GetPieceAt(pickedPiece).IsKing)
+                            generatePiece(blackKing, pos.x, pos.y);
+                        else
+                            generatePiece(blackPiece, pos.x, pos.y);
+                    }
+
+                    game.CapturePiece(item.Item1,item.Item2, item.Item3);
+
+                    return true;
                 }
             }
+            return false;
             //game.CapturePiece();
         }
 
