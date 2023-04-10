@@ -212,6 +212,10 @@ public class CheckersBasic : MonoBehaviour
 
     private bool movePiece(Vector2Int pos)
     {
+        if (pickedPiece == new Vector2Int(-1, -1))
+        {
+            return false;
+        }
         //If must capture
         if (game.mustCapture)
         {
@@ -242,10 +246,11 @@ public class CheckersBasic : MonoBehaviour
                     }
 
                     game.CapturePiece(item.Item1,item.Item2, item.Item3);
-
+                    pickedPiece = new Vector2Int(-1, -1);
                     return true;
                 }
             }
+            pickedPiece = new Vector2Int(-1, -1);
             return false;
             //game.CapturePiece();
         }
@@ -280,9 +285,11 @@ public class CheckersBasic : MonoBehaviour
                 visualizationPosPiece = new GameObject[0];
 
                 game.MovePiece(game.GetPieceAt(pickedPiece), pos);
+                pickedPiece = new Vector2Int(-1, -1);
                 return true;
             }
         }
+        pickedPiece = new Vector2Int(-1, -1);
         return false;
     }
     private Vector3 convertToVector3(Vector2 v)
