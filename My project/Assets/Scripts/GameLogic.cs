@@ -142,6 +142,10 @@ public class GameLogic
         }
 
         turnWhite = !turnWhite;
+        if (current.position.y == 7 || current.position.y == 0)
+        {
+            current.IsKing = true;
+        }
         CheckCapturableBoard();
         return;
     }
@@ -287,6 +291,10 @@ public class GameLogic
             board[position.x, position.y].JustCaptured = false;
             turnWhite = !turnWhite;
             mustCapture = false;
+            if (current.position.y == 7 || current.position.y == 0)
+            {
+                current.IsKing = true;
+            }
             CheckCapturableBoard();
         }
     }
