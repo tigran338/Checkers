@@ -153,7 +153,7 @@ public class CheckersBasic : MonoBehaviour
         {
             Destroy(visualizationPosPiece[i]);
         }
-
+        visualizationPosCoordinates = new Vector2Int[0];
         if (game.GetPieceAt(pos).position == game.empty.position)
         {
             Debug.Log("Selected empty piece.");
@@ -212,7 +212,7 @@ public class CheckersBasic : MonoBehaviour
 
     private bool movePiece(Vector2Int pos)
     {
-        if (pickedPiece == new Vector2Int(-1, -1))
+        if (pickedPiece == new Vector2Int(-1, -1) || visualizationPosPiece == null || visualizationPosCoordinates == null || visualizationPosPiece.Length != visualizationPosCoordinates.Length)
         {
             return false;
         }
