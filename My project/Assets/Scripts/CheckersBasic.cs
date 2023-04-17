@@ -46,7 +46,12 @@ public class CheckersBasic : MonoBehaviour
             Debug.Log("Cursor position at " + cursorPosition());
 
             //Moving the selected piece if possiable
-            if (!movePiece(cursorPosition()))
+            if (movePiece(cursorPosition()))
+            {
+                //Checks is the pieces converted to king
+
+            }
+            else
             {
                 //Shows the user where piece is able to move
                 showPossiblePositions(cursorPosition());
@@ -232,14 +237,14 @@ public class CheckersBasic : MonoBehaviour
 
                     if (game.GetPieceAt(pickedPiece).IsWhite)
                     {
-                        if (game.GetPieceAt(pickedPiece).IsKing)
+                        if (game.GetPieceAt(pickedPiece).IsKing || pos.y == 7)
                             generatePiece(whiteKing, pos.x, pos.y);
                         else
                             generatePiece(whitePiece, pos.x, pos.y);
                     }
                     else
                     {
-                        if (game.GetPieceAt(pickedPiece).IsKing)
+                        if (game.GetPieceAt(pickedPiece).IsKing || pos.y == 0)
                             generatePiece(blackKing, pos.x, pos.y);
                         else
                             generatePiece(blackPiece, pos.x, pos.y);
@@ -256,6 +261,11 @@ public class CheckersBasic : MonoBehaviour
         }
 
         //__________________________________________________
+
+        if (visualizationPosCoordinates == null || visualizationPosCoordinates.Length == 0 || visualizationPosPiece == null)
+            return false;
+
+
         for (int i = 0; i < visualizationPosPiece.Length; i++)
         {
             if (visualizationPosCoordinates[i] == pos)
