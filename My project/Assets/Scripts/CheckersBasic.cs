@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data.SqlTypes;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -19,7 +20,7 @@ public class CheckersBasic : MonoBehaviour
 
     //Two arrrays used for determing the possibale piece move
     private GameObject[] visualizationPosPiece = new GameObject[0];
-    Vector2Int[] visualizationPosCoordinates = new Vector2Int[0];
+    List<(Vector2Int, Vector2Int?)> visualizationPosCoordinates = null;
     (CheckersPiece, CheckersPiece, Vector2Int)[] arrCapturePieces = null;
 
     Vector2Int pickedPiece = new Vector2Int(-1,-1);
@@ -44,17 +45,34 @@ public class CheckersBasic : MonoBehaviour
         if (Input.GetMouseButtonUp(0))
         {
             Debug.Log("Cursor position at " + cursorPosition());
+            var piecePos = cursorPosition();
 
-            //Moving the selected piece if possiable
-            if (movePiece(cursorPosition()))
+            if (IsInBounds(piecePos))
             {
-                //Checks is the pieces converted to king
 
-            }
-            else
-            {
-                //Shows the user where piece is able to move
-                showPossiblePositions(cursorPosition());
+                List<(Vector2Int, Vector2Int?)> moves = pieceAbleMove(piecePos);
+                Debug.Log("Tigran checks " + moves.Count);
+                foreach ((Vector2Int move, Vector2Int? capture) in moves)
+                {
+                    if (capture.HasValue)
+                    {
+                        Debug.Log(string.Format("Move from ({0}, {1}) to ({2}, {3}), capturing ({4}, {5}).",
+                            piecePos.x, piecePos.y, move.x, move.y, capture.Value.x, capture.Value.y));
+                    }
+                    else
+                    {
+                        Debug.Log(string.Format("Move from ({0}, {1}) to ({2}, {3}).",
+                            piecePos.x, piecePos.y, move.x, move.y));
+                    }
+                }
+
+
+                if (!movePiece(piecePos))
+                {
+                    //Shows the user where piece is able to move
+                    showPossiblePositions(piecePos);
+                }
+
             }
         }
         userGuide();
@@ -159,55 +177,26 @@ public class CheckersBasic : MonoBehaviour
             Destroy(visualizationPosPiece[i]);
         }
 
-        if (game.GetPieceAt(pos).position == game.empty.position)
-        {
-            Debug.Log("Selected empty piece.");
-            pickedPiece = new Vector2Int(-1, -1);
-            return;
-        }
-
         pickedPiece = pos;
-        //game.CheckCapturableBoard();
-        //Capture the piece
-        if (game.mustCapture)
-        {
-            arrCapturePieces = game.CheckCapturablePiece(game.GetPieceAt(pos));
-
-            visualizationPosPiece = new GameObject[arrCapturePieces.Length];
-            visualizationPosCoordinates = new Vector2Int[arrCapturePieces.Length];
-            for (int i = 0; i < arrCapturePieces.Length; i++)
-            {
-                visualizationPosPiece[i] = GameObject.Instantiate(visualizePiece);
-                visualizationPosPiece[i].transform.SetParent(transform);
-                visualizationPosPiece[i].layer = LayerMask.NameToLayer("Ignore Raycast");
-
-                visualizationPosPiece[i].transform.localPosition = postionCoordinates[arrCapturePieces[i].Item3.x, arrCapturePieces[i].Item3.y];
-                visualizationPosCoordinates[i] = arrCapturePieces[i].Item3;
-            }
-
-
-            return;
-        }
 
         //_____________________
-        arrCapturePieces = null;
-        visualizationPosCoordinates = game.CheckMovement(game.GetPieceAt(pos));
+        visualizationPosCoordinates = pieceAbleMove(pickedPiece);
+
         if (visualizationPosCoordinates == null)
             return;
-        Debug.Log("Available move positions is " + visualizationPosCoordinates.Length);
 
         
-        visualizationPosPiece = new GameObject[visualizationPosCoordinates.Length];
-        for (int i = 0; i < visualizationPosCoordinates.Length; i++)
+        visualizationPosPiece = new GameObject[visualizationPosCoordinates.Count];
+        for (int i = 0; i < visualizationPosCoordinates.Count; i++)
         {
             visualizationPosPiece[i] = GameObject.Instantiate(visualizePiece);
             visualizationPosPiece[i].transform.SetParent(transform);
             visualizationPosPiece[i].layer = LayerMask.NameToLayer("Ignore Raycast");
         }
 
-        for (int i = 0; i < visualizationPosCoordinates.Length; i++)
+        for (int i = 0; i < visualizationPosCoordinates.Count; i++)
         {
-            visualizationPosPiece[i].transform.localPosition = postionCoordinates[visualizationPosCoordinates[i].x, visualizationPosCoordinates[i].y];
+            visualizationPosPiece[i].transform.localPosition = postionCoordinates[visualizationPosCoordinates[i].Item1.x, visualizationPosCoordinates[i].Item1.y];
             Debug.Log("Can move to " + visualizationPosCoordinates[i]);
         }
 
@@ -215,96 +204,199 @@ public class CheckersBasic : MonoBehaviour
     }
 
 
+
+    
     private bool movePiece(Vector2Int pos)
     {
         if (pickedPiece == new Vector2Int(-1, -1))
         {
             return false;
         }
-        //If must capture
-        if (game.mustCapture)
+
+
+
+        foreach (var (whereMove, capture) in pieceAbleMove(pickedPiece))
         {
-            if(arrCapturePieces == null || arrCapturePieces.Length == 0)
-                return false;
-
-            foreach (var item in arrCapturePieces)
+            if (pos == whereMove)
             {
-                if (item.Item3 == pos)
+
+                var (isWhite, isKing) = pieceType(pickedPiece);
+                if (isWhite)
                 {
-                    Destroy(pieces[pickedPiece.x, pickedPiece.y]);
-                    Destroy(pieces[item.Item2.position.x, item.Item2.position.y]);
-                    pieces[item.Item2.position.x, item.Item2.position.y] = null;
-
-                    if (game.GetPieceAt(pickedPiece).IsWhite)
-                    {
-                        if (game.GetPieceAt(pickedPiece).IsKing || pos.y == 7)
-                            generatePiece(whiteKing, pos.x, pos.y);
-                        else
-                            generatePiece(whitePiece, pos.x, pos.y);
-                    }
-                    else
-                    {
-                        if (game.GetPieceAt(pickedPiece).IsKing || pos.y == 0)
-                            generatePiece(blackKing, pos.x, pos.y);
-                        else
-                            generatePiece(blackPiece, pos.x, pos.y);
-                    }
-
-                    game.CapturePiece(item.Item1,item.Item2, item.Item3);
-                    pickedPiece = new Vector2Int(-1, -1);
-                    return true;
-                }
-            }
-            pickedPiece = new Vector2Int(-1, -1);
-            return false;
-            //game.CapturePiece();
-        }
-
-        //__________________________________________________
-
-        if (visualizationPosCoordinates == null || visualizationPosCoordinates.Length == 0 || visualizationPosPiece == null)
-            return false;
-
-
-        for (int i = 0; i < visualizationPosPiece.Length; i++)
-        {
-            if (visualizationPosCoordinates[i] == pos)
-            {
-                Destroy(pieces[pickedPiece.x, pickedPiece.y]);
-                if (game.GetPieceAt(pickedPiece).IsWhite)
-                {
-                    if (game.GetPieceAt(pickedPiece).IsKing)
+                    if (isKing || pos.y == 7)
                         generatePiece(whiteKing, pos.x, pos.y);
                     else
                         generatePiece(whitePiece, pos.x, pos.y);
                 }
                 else
                 {
-                    if (game.GetPieceAt(pickedPiece).IsKing)
+                    if (isKing || pos.y == 0)
                         generatePiece(blackKing, pos.x, pos.y);
                     else
                         generatePiece(blackPiece, pos.x, pos.y);
                 }
 
-                
+                Destroy(pieces[pickedPiece.x, pickedPiece.y]);
+                pieces[pickedPiece.x, pickedPiece.y] = null;
 
-                for (int j = 0; j < visualizationPosPiece.Length; j++)
+
+                if (capture != null)
                 {
-                    Destroy(visualizationPosPiece[j]);
+                    var temp = capture ?? new Vector2Int(-1, -1);
+                    Destroy(pieces[temp.x, temp.y]);
+                    pieces[temp.x, temp.y] = null;
                 }
-                visualizationPosPiece = new GameObject[0];
 
-                game.MovePiece(game.GetPieceAt(pickedPiece), pos);
+
+                for (int i = 0; i < visualizationPosPiece.Length; i++)
+                {
+                    Destroy(visualizationPosPiece[i]);
+                }
                 pickedPiece = new Vector2Int(-1, -1);
                 return true;
             }
         }
+
         pickedPiece = new Vector2Int(-1, -1);
         return false;
     }
-    private Vector3 convertToVector3(Vector2 v)
+
+
+
+    /// <summary>
+    /// Determines the position where can move the piece and the pices must be captured.
+    /// </summary>
+    /// <param name="piecePos">The position of the piece to check.</param>
+    /// <returns>The List of tuple of (Vector2Int, Vector2Int?) values representing (NewPosition, MustCapture).  If MustCapture is null no need to capture</returns>
+    private List<(Vector2Int, Vector2Int?)> pieceAbleMove(Vector2Int piecePos)
     {
-        return new Vector3(v.x, boardCornerleftbottom.y, v.y);
+        List<(Vector2Int, Vector2Int?)> moves = new List<(Vector2Int, Vector2Int?)>();
+        List<(Vector2Int, Vector2Int?)> captureMoves = new List<(Vector2Int, Vector2Int?)>();
+        var (isWhite, isKing) = pieceType(piecePos);
+
+
+        if (pieces[piecePos.x, piecePos.y] == null)
+            return moves;
+
+
+        int numSteps;
+        Vector2Int[] moveSteps;
+        Vector2Int[] captureSteps = new Vector2Int[] {
+            new Vector2Int(1, 1), new Vector2Int(-1, 1),
+            new Vector2Int(1, -1), new Vector2Int(-1, -1) 
+        };
+
+        if (isKing)
+        {
+            numSteps = 8;
+            moveSteps = new Vector2Int[] {
+            new Vector2Int(1, 1), new Vector2Int(-1, 1),
+            new Vector2Int(1, -1), new Vector2Int(-1, -1)
+        };
+         
+        }
+        else
+        {
+            numSteps = 1;
+            moveSteps = isWhite
+                ? new Vector2Int[] { new Vector2Int(1, 1), new Vector2Int(-1, 1) }
+                : new Vector2Int[] { new Vector2Int(1, -1), new Vector2Int(-1, -1) };
+        }
+
+        
+        foreach (Vector2Int move in moveSteps)
+        {
+            int n = numSteps;
+            Vector2Int newPosition = piecePos;
+            while (n > 0)
+            {
+                newPosition += move;
+                if (IsInBounds(newPosition))
+                {
+                    var (targetIsWhite, _) = pieceType(newPosition);
+
+                    if (isWhite != targetIsWhite && pieces[newPosition.x, newPosition.y] != null)
+                    {
+                        break;
+                    }
+                    else if (pieces[newPosition.x, newPosition.y] == null)
+                    {
+                        moves.Add((newPosition, Vector2Int.zero));
+                    }
+                }
+                n--;
+            }
+        }
+
+
+        foreach (Vector2Int move in captureSteps)
+        {
+            int n = numSteps;
+            Vector2Int capturePosition = piecePos;
+            while (n > 0)
+            {
+                capturePosition += move;
+                if (IsInBounds(capturePosition))
+                {
+                    var (targetIsWhite, _) = pieceType(capturePosition);
+
+                    if (isWhite != targetIsWhite && pieces[capturePosition.x, capturePosition.y] != null)
+                    {
+                        var newPosition = capturePosition + move;
+                        if (IsInBounds(newPosition) && pieces[newPosition.x, newPosition.y] == null)
+                        {
+                            captureMoves.Add((newPosition, capturePosition));
+                        }
+                        break;
+                    }
+                }
+                n--;
+            }
+        }
+
+        
+
+        return captureMoves.Count > 0 ? captureMoves : moves;
+    }
+
+
+    private bool IsInBounds(Vector2Int position)
+    {
+        return position.x >= 0 && position.x < 8 && position.y >= 0 && position.y < 8;
+    }
+
+
+
+
+    /// <summary>
+    /// Determines the type of a piece at a given position and returns a tuple of two boolean values.
+    /// </summary>
+    /// <param name="pospiece">The position of the piece to check.</param>
+    /// <returns>A tuple of two boolean values representing (isWhite, isKing).</returns>
+    private (bool,bool) pieceType(Vector2Int pospiece)
+    {
+        
+        var piece = pieces[pospiece.x, pospiece.y];
+        bool isWhite = false;
+        bool isKing = false;
+        if (piece == null)
+            return (false,false);
+        Debug.Log("                                 " + piece.name);
+        if (piece.name.Contains("White"))
+        {
+            isWhite = true;
+            Debug.Log("White");
+        }
+
+        if (piece.name.Contains("King"))
+        {
+            isKing = true;
+            Debug.Log("King");
+        }
+
+
+
+        return (isWhite, isKing);
     }
 }
 
