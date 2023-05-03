@@ -10,8 +10,10 @@ using static UnityEditor.PlayerSettings;
 public class CheckersBasic : MonoBehaviour
 {
     public GameObject whiteKing, blackKing, whitePiece, blackPiece, visualizePiece;
-    GameLogic game = new GameLogic();
     private GameObject[,] pieces = new GameObject[8, 8];
+
+    private bool isWhiteTurn = true;
+    private bool onlyCapture = false;
 
     public GameObject visualization;
     private Vector3 boardCornerleftbottom = new Vector3(-0.210f, 0.1f, 0.16f);
@@ -21,14 +23,11 @@ public class CheckersBasic : MonoBehaviour
     //Two arrrays used for determing the possibale piece move
     private GameObject[] visualizationPosPiece = new GameObject[0];
     List<(Vector2Int, Vector2Int?)> visualizationPosCoordinates = null;
-    (CheckersPiece, CheckersPiece, Vector2Int)[] arrCapturePieces = null;
 
     Vector2Int pickedPiece = new Vector2Int(-1,-1);
     void Start()
     {
         boardInitialize();
-        game.InitBoard();
-        game.PrintBoard();
         //game.GetPieceAt(new Vector2Int(1,1));
         //Initialize visualization GameObject
         //______________________________________________________________
@@ -36,20 +35,23 @@ public class CheckersBasic : MonoBehaviour
         visualization.transform.SetParent(transform);
         visualization.layer = LayerMask.NameToLayer("Ignore Raycast");
         //______________________________________________________________
+        isWhiteTurn = true;
 
     }
 
     // Update is called once per frame
     void Update()
     {
+        
         if (Input.GetMouseButtonUp(0))
         {
-            Debug.Log("Cursor position at " + cursorPosition());
+            //onlyCapture = OnlyCapture();
+            //Debug.Log("Cursor position at " + cursorPosition());
             var piecePos = cursorPosition();
 
             if (IsInBounds(piecePos))
             {
-
+                /*
                 List<(Vector2Int, Vector2Int?)> moves = pieceAbleMove(piecePos);
                 Debug.Log("Tigran checks " + moves.Count);
                 foreach ((Vector2Int move, Vector2Int? capture) in moves)
@@ -65,7 +67,7 @@ public class CheckersBasic : MonoBehaviour
                             piecePos.x, piecePos.y, move.x, move.y));
                     }
                 }
-
+                */
 
                 if (!movePiece(piecePos))
                 {
@@ -157,14 +159,17 @@ public class CheckersBasic : MonoBehaviour
 
     private void userGuide()
     {
-        Vector2 position = cursorPosition();
-        if (position == new Vector2(-1, -1) || pieces[(int)position.x, (int)position.y] == null)
+        Vector2Int position = cursorPosition();
+        
+
+
+        if (position == new Vector2(-1, -1) || pieces[position.x, position.y] == null || !IsInBounds(position) || isWhiteTurn != pieceType(position).Item1)
         {
             visualization.transform.position = Vector3.zero;
             return;
         }
 
-        visualization.transform.localPosition = postionCoordinates[(int)position.x, (int)position.y];
+        visualization.transform.localPosition = postionCoordinates[position.x, position.y];
 
         //Debug.Log("Guide position is " + convertToVector3(position));
     }
@@ -180,7 +185,7 @@ public class CheckersBasic : MonoBehaviour
         pickedPiece = pos;
 
         //_____________________
-        visualizationPosCoordinates = pieceAbleMove(pickedPiece);
+        visualizationPosCoordinates = pieceAbleMoveMain(pickedPiece);
 
         if (visualizationPosCoordinates == null)
             return;
@@ -197,7 +202,6 @@ public class CheckersBasic : MonoBehaviour
         for (int i = 0; i < visualizationPosCoordinates.Count; i++)
         {
             visualizationPosPiece[i].transform.localPosition = postionCoordinates[visualizationPosCoordinates[i].Item1.x, visualizationPosCoordinates[i].Item1.y];
-            Debug.Log("Can move to " + visualizationPosCoordinates[i]);
         }
 
         return;
@@ -213,9 +217,10 @@ public class CheckersBasic : MonoBehaviour
             return false;
         }
 
+        
 
 
-        foreach (var (whereMove, capture) in pieceAbleMove(pickedPiece))
+        foreach (var (whereMove, capture) in pieceAbleMoveMain(pickedPiece))
         {
             if (pos == whereMove)
             {
@@ -253,6 +258,7 @@ public class CheckersBasic : MonoBehaviour
                     Destroy(visualizationPosPiece[i]);
                 }
                 pickedPiece = new Vector2Int(-1, -1);
+                isWhiteTurn = !isWhiteTurn;
                 return true;
             }
         }
@@ -263,8 +269,36 @@ public class CheckersBasic : MonoBehaviour
 
 
 
+
+
+
     /// <summary>
-    /// Determines the position where can move the piece and the pices must be captured.
+    /// Determines the position where can move the piece and the pieces must be captured. Takes into account the game situation
+    /// </summary>
+    /// <param name="piecePos">The position of the piece to check.</param>
+    /// <returns>The List of tuple of (Vector2Int, Vector2Int?) values representing (NewPosition, MustCapture).  If MustCapture is null no need to capture</returns>
+    private List<(Vector2Int, Vector2Int?)> pieceAbleMoveMain(Vector2Int piecePos)
+    {
+        if (OnlyCapture())
+        {
+            foreach (var (_, capture) in pieceAbleMove(piecePos))
+            {
+                if (capture != null)
+                {
+                    return pieceAbleMove(piecePos);
+                }
+            }
+            return new List<(Vector2Int, Vector2Int?)>(); ;
+        }
+        return pieceAbleMove(piecePos);
+    }
+
+
+
+
+
+    /// <summary>
+    /// Determines the position where can move the piece and the pieces must be captured. Dont take ino account game situation
     /// </summary>
     /// <param name="piecePos">The position of the piece to check.</param>
     /// <returns>The List of tuple of (Vector2Int, Vector2Int?) values representing (NewPosition, MustCapture).  If MustCapture is null no need to capture</returns>
@@ -275,7 +309,7 @@ public class CheckersBasic : MonoBehaviour
         var (isWhite, isKing) = pieceType(piecePos);
 
 
-        if (pieces[piecePos.x, piecePos.y] == null)
+        if (pieces[piecePos.x, piecePos.y] == null || isWhiteTurn != pieceType(piecePos).Item1)
             return moves;
 
 
@@ -303,6 +337,10 @@ public class CheckersBasic : MonoBehaviour
                 : new Vector2Int[] { new Vector2Int(1, -1), new Vector2Int(-1, -1) };
         }
 
+        /*if (OnlyCapture())
+        {
+            moveSteps = new Vector2Int[] { };
+        }*/
         
         foreach (Vector2Int move in moveSteps)
         {
@@ -321,7 +359,7 @@ public class CheckersBasic : MonoBehaviour
                     }
                     else if (pieces[newPosition.x, newPosition.y] == null)
                     {
-                        moves.Add((newPosition, Vector2Int.zero));
+                        moves.Add((newPosition, null));
                     }
                 }
                 n--;
@@ -381,22 +419,44 @@ public class CheckersBasic : MonoBehaviour
         bool isKing = false;
         if (piece == null)
             return (false,false);
-        Debug.Log("                                 " + piece.name);
+        //Debug.Log("                                 " + piece.name);
         if (piece.name.Contains("White"))
         {
             isWhite = true;
-            Debug.Log("White");
+            //Debug.Log("White");
         }
 
         if (piece.name.Contains("King"))
         {
             isKing = true;
-            Debug.Log("King");
+            //Debug.Log("King");
         }
 
 
 
         return (isWhite, isKing);
+    }
+
+    private bool OnlyCapture()
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            for (int j = 0; j < 8; j++)
+            {
+                var v = new Vector2Int(i, j);
+                if (pieces[i,j] != null && isWhiteTurn == pieceType(v).Item1)
+                {
+                    foreach (var (_,capture) in pieceAbleMove(v))
+                    {
+                        if (capture != null)
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 }
 
