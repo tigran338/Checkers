@@ -25,6 +25,8 @@ public class CheckersBasic : MonoBehaviour
     List<(Vector2Int, Vector2Int?)> visualizationPosCoordinates = null;
 
     Vector2Int pickedPiece = new Vector2Int(-1,-1);
+    Vector2Int? pickedPieceMust = null;
+
     void Start()
     {
         boardInitialize();
@@ -183,6 +185,10 @@ public class CheckersBasic : MonoBehaviour
         }
 
         pickedPiece = pos;
+        if (pickedPieceMust != null)
+        {
+            pickedPiece = pickedPieceMust ?? throw new System.Exception("pickedPieceMust cannot be null."); ;
+        }
 
         //_____________________
         visualizationPosCoordinates = pieceAbleMoveMain(pickedPiece);
@@ -258,7 +264,14 @@ public class CheckersBasic : MonoBehaviour
                     Destroy(visualizationPosPiece[i]);
                 }
                 pickedPiece = new Vector2Int(-1, -1);
-                isWhiteTurn = !isWhiteTurn;
+
+                if (capture != null)
+                    pickedPieceMust = pos;
+                else
+                    isWhiteTurn = !isWhiteTurn;
+
+                pieceAbleMoveMain(pos);
+                showPossiblePositions(pos);
                 return true;
             }
         }
@@ -290,6 +303,22 @@ public class CheckersBasic : MonoBehaviour
             }
             return new List<(Vector2Int, Vector2Int?)>(); ;
         }
+
+        if (pickedPieceMust != null)
+        {
+            foreach (var (_, capture) in pieceAbleMove(pickedPieceMust ?? throw new System.Exception("pickedPieceMust cannot be null.")))
+            {
+                if (capture != null)
+                {
+                    return pieceAbleMove(piecePos);
+                }
+            }
+
+            pickedPieceMust = null;
+            isWhiteTurn = !isWhiteTurn;
+            return new List<(Vector2Int, Vector2Int?)>(); ;
+        }
+
         return pieceAbleMove(piecePos);
     }
 
@@ -351,9 +380,8 @@ public class CheckersBasic : MonoBehaviour
                 newPosition += move;
                 if (IsInBounds(newPosition))
                 {
-                    var (targetIsWhite, _) = pieceType(newPosition);
 
-                    if (isWhite != targetIsWhite && pieces[newPosition.x, newPosition.y] != null)
+                    if (pieces[newPosition.x, newPosition.y] != null)
                     {
                         break;
                     }
