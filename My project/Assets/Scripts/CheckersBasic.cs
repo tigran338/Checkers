@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data.SqlTypes;
+using System.Runtime.InteropServices;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -9,6 +10,74 @@ using static UnityEditor.PlayerSettings;
 
 public class CheckersBasic : MonoBehaviour
 {
+    public GameObject pauseMenu;
+    public GameObject winWhiteMenu;
+    public GameObject winBlackMenu;
+
+    bool GameIsPaused = false;
+    bool? isWhiteWin = null;
+
+    private void Resume()
+    {
+        if (isWhiteWin == null)
+        {
+            pauseMenu.SetActive(false);
+            Time.timeScale = 1f;
+            GameIsPaused = false;
+        }
+    }
+    private void Pause()
+    {
+        if (isWhiteWin == null)
+        {
+            pauseMenu.SetActive(true);
+            Time.timeScale = 0f;
+            GameIsPaused = true;
+        }
+    }
+
+    private void DisplayWinner()
+    {
+        int whiteCount = 0;
+        int blackCount = 0;
+
+        for (int i = 0; i < 8; i++)
+        {
+            for (int j = 0; j < 8; j++)
+            {
+                if (pieces[i,j] != null)
+                {
+                    Vector2Int pos = new Vector2Int(i, j);
+                    if (pieceType(pos).Item1)
+                        whiteCount++;
+                    else
+                        blackCount++;
+                }
+            }
+        }
+
+
+        if (whiteCount == 0)
+            isWhiteWin = false;
+        if (blackCount == 0)
+            isWhiteWin = true;
+
+        if(isWhiteWin != null)
+        {
+            if (isWhiteWin??throw new System.Exception("Is White variable is null (Handle the case!!!"))
+            {
+                Time.timeScale = 0f;
+                winWhiteMenu.SetActive(true);
+            }
+            else
+            {
+                Time.timeScale = 0f;
+                winBlackMenu.SetActive(true);
+            }
+        }
+    }
+
+
     public GameObject whiteKing, blackKing, whitePiece, blackPiece, visualizePiece;
     private GameObject[,] pieces = new GameObject[8, 8];
 
@@ -39,12 +108,29 @@ public class CheckersBasic : MonoBehaviour
         //______________________________________________________________
         isWhiteTurn = true;
 
+        GameIsPaused = false;
+        Resume();
+
+        winWhiteMenu.SetActive(false);
+        winBlackMenu.SetActive(false);
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        DisplayWinner();
+        if (isWhiteWin != null)
+            return;
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+            if (GameIsPaused)
+                Resume();
+            else
+                Pause();
+
+        if (GameIsPaused)
+            return;
+
         if (Input.GetMouseButtonUp(0))
         {
             //onlyCapture = OnlyCapture();
