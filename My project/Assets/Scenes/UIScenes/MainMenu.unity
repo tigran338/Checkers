@@ -1089,7 +1089,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Standart Mode
+  m_text: 'Standard Mode
 
 '
   m_isRightToLeft: 0
