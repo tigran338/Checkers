@@ -9,7 +9,6 @@ public class MenuHandler : MonoBehaviour
 
     public void StandartMode()
     {
-        Debug.Log("LOve");
         SceneManager.LoadScene("StandartMode");
     }
 
