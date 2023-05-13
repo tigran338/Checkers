@@ -133,29 +133,10 @@ public class CheckersBasic : MonoBehaviour
 
         if (Input.GetMouseButtonUp(0))
         {
-            //onlyCapture = OnlyCapture();
-            //Debug.Log("Cursor position at " + cursorPosition());
             var piecePos = cursorPosition();
 
             if (IsInBounds(piecePos))
             {
-                /*
-                List<(Vector2Int, Vector2Int?)> moves = pieceAbleMove(piecePos);
-                Debug.Log("Tigran checks " + moves.Count);
-                foreach ((Vector2Int move, Vector2Int? capture) in moves)
-                {
-                    if (capture.HasValue)
-                    {
-                        Debug.Log(string.Format("Move from ({0}, {1}) to ({2}, {3}), capturing ({4}, {5}).",
-                            piecePos.x, piecePos.y, move.x, move.y, capture.Value.x, capture.Value.y));
-                    }
-                    else
-                    {
-                        Debug.Log(string.Format("Move from ({0}, {1}) to ({2}, {3}).",
-                            piecePos.x, piecePos.y, move.x, move.y));
-                    }
-                }
-                */
 
                 if (!movePiece(piecePos))
                 {
